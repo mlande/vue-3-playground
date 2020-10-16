@@ -1,35 +1,34 @@
 <template>
-  <h1>Hello Composition</h1>
-  <p v-for="repo in repos" :key="repo.id">
-    {{ repo.name }}
-  </p>
+  <p v-if="loadingState === 'loading'">Loading...</p>
+  <section v-if="loadingState === 'loaded'">
+    <repository-card
+      v-for="repository in repositories"
+      :key="repository.id"
+      :repository="repository"
+    ></repository-card>
+  </section>
+
+  <p v-if="loadingState === 'error'">Something went wrong</p>
 </template>
 
 <script lang="ts">
-import { defineComponent, Ref, ref, SetupContext } from 'vue';
-import { getReposOfUser, GithubRepo } from './service';
+import { defineComponent } from 'vue';
+import { useUserRepositories, RepositoryCard } from './use-cases/repository';
+import { useUser } from './use-cases/user';
 
 export default defineComponent({
   name: 'App',
-  components: {},
-  setup(props, ctx: SetupContext) {
-    console.log('Setting up');
-    console.log('these are my props:', props);
-    console.log('this is my context:', ctx);
-
-    const repos: Ref<GithubRepo[]> = ref([]);
-
-    const getRepos = async (githubUsername: string) => {
-      repos.value = await getReposOfUser(githubUsername);
-    };
+  components: {
+    RepositoryCard,
+  },
+  setup() {
+    const { user } = useUser();
+    const { repositories, loadingState } = useUserRepositories(user);
 
     setTimeout(() => {
-      getRepos('mlande');
-    }, 4000);
-
-    return {
-      repos,
-    };
+      user.value = { username: 'mlande' };
+    }, 3000);
+    return { repositories, loadingState };
   },
 });
 </script>
